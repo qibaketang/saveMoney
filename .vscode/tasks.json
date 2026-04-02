@@ -1,0 +1,124 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Check Environment (Windows)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}\\.vscode\\scripts\\check-env.ps1"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Start Backend (dev)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npm.cmd",
+				"run",
+				"dev"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/backend"
+			},
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			}
+		},
+		{
+			"label": "Start Frontend (flutter)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"flutter.bat",
+				"run"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/frontend"
+			},
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			}
+		},
+		{
+			"label": "Start Services (parallel)",
+			"dependsOrder": "parallel",
+			"dependsOn": [
+				"Start Backend (dev)",
+				"Start Frontend (flutter)"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Start Full Stack",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"Check Environment (Windows)",
+				"Start Services (parallel)"
+			],
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "Stop Backend (dev)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}\\.vscode\\scripts\\stop-backend.ps1"
+			],
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			}
+		},
+		{
+			"label": "Stop Frontend (flutter)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}\\.vscode\\scripts\\stop-frontend.ps1"
+			],
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			}
+		},
+		{
+			"label": "Stop Full Stack",
+			"dependsOrder": "parallel",
+			"dependsOn": [
+				"Stop Backend (dev)",
+				"Stop Frontend (flutter)"
+			],
+			"problemMatcher": []
+		}
+	]
+}
