@@ -63,6 +63,52 @@ budget_app_project/
 └── README.md
 ```
 
+## 一键启动（推荐）
+
+### 方式 1：VS Code 任务（真正一键）
+
+1. 打开命令面板：`Ctrl+Shift+P`
+2. 执行：`Tasks: Run Task`
+3. 选择：`Start Full Stack`
+
+这个任务会自动：
+- 执行环境检查（Node / npm / Flutter / MongoDB）
+- 并行启动后端和前端
+
+停止全栈：
+
+1. `Ctrl+Shift+P`
+2. `Tasks: Run Task`
+3. 选择：`Stop Full Stack`
+
+快捷键：`Ctrl+Shift+B`（默认绑定到 `Start Full Stack`）
+
+### 方式 2：终端命令（手动两窗）
+
+后端终端：
+
+```powershell
+cd backend
+npm install
+npm run dev
+```
+
+前端终端：
+
+```powershell
+cd frontend
+flutter pub get
+flutter run
+```
+
+### 常见问题
+
+- 如果一键启动提示 `Missing/Unavailable: MongoDB(localhost:27017)`：
+	- 先单独运行 `Check Environment (Windows)` 任务查看输出
+	- 该脚本已支持 MongoDB 服务失败时自动尝试 `mongod` 兜底启动
+- 如果 Flutter 提示 `Waiting for another flutter command to release the startup lock...`：
+	- 关闭残留 `flutter/dart` 进程后重试 `flutter pub get`
+
 ## 前端启动
 
 ```bash

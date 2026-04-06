@@ -15,6 +15,12 @@ class UserProfile {
         avatar: json['avatar'] as String? ?? '',
       );
 
+  factory UserProfile.fromApi(Map<String, dynamic> json) => UserProfile(
+        nickname: json['nickname'] as String? ?? '预算玩家',
+        phone: json['phone'] as String? ?? '',
+        avatar: json['avatarUrl'] as String? ?? '',
+      );
+
   Map<String, dynamic> toJson() => {
         'nickname': nickname,
         'phone': phone,

@@ -9,6 +9,41 @@ function Test-MongoLocal {
   return (Test-NetConnection -ComputerName localhost -Port 27017 -WarningAction SilentlyContinue).TcpTestSucceeded
 }
 
+function Start-MongoFallbackProcess {
+  $service = Get-CimInstance Win32_Service -Filter "Name='MongoDB'" -ErrorAction SilentlyContinue
+  if (-not $service) { return $false }
+
+  $pathName = $service.PathName
+  if (-not $pathName) { return $false }
+
+  if ($pathName -match '"([^"]*mongod\.exe)"') {
+    $mongodExe = $matches[1]
+  } else {
+    $parts = $pathName -split '\s+--', 2
+    $mongodExe = $parts[0].Trim('" ')
+  }
+
+  if (-not (Test-Path $mongodExe)) { return $false }
+
+  $argString = ''
+  if ($pathName -match '^[^\"]*"[^"]*"\s*(.*)$') {
+    $argString = $matches[1]
+  } elseif ($pathName -match '^[^\s]+\s+(.*)$') {
+    $argString = $matches[1]
+  }
+
+  $argString = $argString -replace '--service', ''
+  $argString = $argString.Trim()
+
+  try {
+    Start-Process -FilePath $mongodExe -ArgumentList $argString -WindowStyle Hidden | Out-Null
+    Start-Sleep -Seconds 2
+    return (Test-MongoLocal)
+  } catch {
+    return $false
+  }
+}
+
 $envPath = Join-Path $PSScriptRoot '..\..\backend\.env'
 $mongoUri = $null
 
@@ -35,6 +70,13 @@ if (-not $mongoUri) {
         }
       } catch {
         Write-Host 'MongoDB service exists but could not be started automatically'
+      }
+    }
+
+    if (-not $mongoOk) {
+      $mongoOk = Start-MongoFallbackProcess
+      if ($mongoOk) {
+        Write-Host 'MongoDB started with mongod fallback process'
       }
     }
   }

@@ -14,6 +14,40 @@ class LimitsScreen extends StatefulWidget {
 class _LimitsScreenState extends State<LimitsScreen> {
   late TextEditingController dailyController;
 
+  Future<void> _editCategoryLimit(
+      BuildContext context, String category, double value) async {
+    final controller = TextEditingController(text: value.toStringAsFixed(0));
+    final result = await showDialog<double>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('设置$category限额'),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(labelText: '金额'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final amount = double.tryParse(controller.text.trim());
+              Navigator.of(context).pop(amount);
+            },
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+
+    if (!context.mounted || result == null || result <= 0) {
+      return;
+    }
+    await context.read<LimitProvider>().updateCategoryLimit(category, result);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +88,22 @@ class _LimitsScreenState extends State<LimitsScreen> {
                   AppFormatters.currency(limitProvider.config.monthlyLimit)),
             ),
           ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              title: const Text('分类总额（自动汇总）'),
+              subtitle: const Text('分类限额之和将作为总日限额'),
+              trailing: Text(
+                AppFormatters.currency(limitProvider.categoryTotalLimit),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: () =>
+                context.read<LimitProvider>().syncTotalLimitFromCategories(),
+            child: const Text('按分类总额更新总限额'),
+          ),
           const SizedBox(height: 16),
           Text('分类限额', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
@@ -71,6 +121,11 @@ class _LimitsScreenState extends State<LimitsScreen> {
                       children: [
                         Expanded(child: Text(entry.key)),
                         Text(AppFormatters.currency(entry.value)),
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined),
+                          onPressed: () => _editCategoryLimit(
+                              context, entry.key, entry.value),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
