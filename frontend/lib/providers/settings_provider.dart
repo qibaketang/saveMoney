@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsProvider extends ChangeNotifier {
-  static const _storageKey = 'settings';
+  static const _storageKeyBase = 'settings';
+  String _scope = 'guest';
 
   bool limitAlert = true;
   bool overLimitAlert = true;
@@ -12,7 +13,28 @@ class SettingsProvider extends ChangeNotifier {
   bool darkMode = false;
   bool quickLedger = true;
 
+  String get _storageKey => '$_storageKeyBase::$_scope';
+
   SettingsProvider() {
+    load();
+  }
+
+  void applyAuthContext({required String scope, required bool loggedIn}) {
+    final normalizedScope = loggedIn ? scope : 'guest';
+    if (_scope == normalizedScope) {
+      return;
+    }
+    _scope = normalizedScope;
+    if (!loggedIn) {
+      limitAlert = true;
+      overLimitAlert = true;
+      pushNotification = true;
+      smsNotification = false;
+      darkMode = false;
+      quickLedger = true;
+      notifyListeners();
+      return;
+    }
     load();
   }
 

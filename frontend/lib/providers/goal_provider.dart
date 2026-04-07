@@ -5,11 +5,28 @@ import '../models/saving_goal.dart';
 import '../services/api_client.dart';
 
 class GoalProvider extends ChangeNotifier {
-  static const _storageKey = 'saving_goal';
+  static const _storageKeyBase = 'saving_goal';
+  String _scope = 'guest';
   SavingGoal? _goal;
   SavingGoal? get goal => _goal;
 
+  String get _storageKey => '$_storageKeyBase::$_scope';
+
   GoalProvider() {
+    load();
+  }
+
+  void applyAuthContext({required String scope, required bool loggedIn}) {
+    final normalizedScope = loggedIn ? scope : 'guest';
+    if (_scope == normalizedScope) {
+      return;
+    }
+    _scope = normalizedScope;
+    if (!loggedIn) {
+      _goal = null;
+      notifyListeners();
+      return;
+    }
     load();
   }
 

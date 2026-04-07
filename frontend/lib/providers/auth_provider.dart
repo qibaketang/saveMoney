@@ -19,6 +19,13 @@ class AuthProvider extends ChangeNotifier {
   bool get loggedIn => _loggedIn;
   UserProfile get profile => _profile;
   String get token => _token;
+  String get cacheScope {
+    if (!_loggedIn) {
+      return 'guest';
+    }
+    final phone = _profile.phone.trim();
+    return phone.isEmpty ? 'guest' : phone;
+  }
 
   AuthProvider() {
     ApiClient.instance.setUnauthorizedHandler(_handleUnauthorized);
@@ -40,6 +47,50 @@ class AuthProvider extends ChangeNotifier {
   Future<void> login(String phone) async {
     final data = await ApiClient.instance
         .post('/auth/login', {'phone': phone}, withAuth: false);
+    await _saveAuthResult(data);
+  }
+
+  Future<void> loginWithPassword(String phone, String password) async {
+    final data = await ApiClient.instance.post(
+      '/auth/login/password',
+      {'phone': phone, 'password': password},
+      withAuth: false,
+    );
+    await _saveAuthResult(data);
+  }
+
+  Future<void> registerWithCode({
+    required String phone,
+    required String verifyCode,
+    required String password,
+    String? nickname,
+  }) async {
+    final payload = <String, dynamic>{
+      'phone': phone,
+      'verifyCode': verifyCode,
+      'password': password,
+    };
+    if (nickname != null && nickname.trim().isNotEmpty) {
+      payload['nickname'] = nickname.trim();
+    }
+    final data = await ApiClient.instance.post(
+      '/auth/register',
+      payload,
+      withAuth: false,
+    );
+    await _saveAuthResult(data);
+  }
+
+  Future<String> requestVerifyCode(String phone) async {
+    final data = await ApiClient.instance.post(
+      '/auth/send-code',
+      {'phone': phone},
+      withAuth: false,
+    );
+    return (data['mockCode'] ?? '').toString();
+  }
+
+  Future<void> _saveAuthResult(Map<String, dynamic> data) async {
     _token = (data['accessToken'] ?? '').toString();
     _profile = UserProfile.fromApi(data['user'] as Map<String, dynamic>);
     _loggedIn = _token.isNotEmpty;

@@ -7,6 +7,9 @@ const limitSchema = new mongoose.Schema({
   categories: [{
     name: String,
     amount: Number,
+    cycle: { type: String, enum: ['daily', 'monthly'], default: 'daily' },
+    dailyLimit: { type: Number, default: 0 },
+    monthlyLimit: { type: Number, default: 0 },
     warningThreshold: { type: Number, default: 80 },
     dangerThreshold: { type: Number, default: 100 }
   }]

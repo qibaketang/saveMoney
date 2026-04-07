@@ -22,6 +22,7 @@ class _LedgerScreenState extends State<LedgerScreen> {
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
+      locale: const Locale('zh', 'CN'),
       initialDate: selectedDate,
       firstDate: DateTime(2020, 1, 1),
       lastDate: DateTime(2100, 12, 31),

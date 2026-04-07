@@ -12,6 +12,13 @@ import '../../widgets/summary_card.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  String _normalizeBudgetCategory(String category) {
+    if (category == '早餐' || category == '午餐' || category == '晚餐') {
+      return '餐饮';
+    }
+    return category;
+  }
+
   Future<void> _quickAddRecord(BuildContext context, String category) async {
     final amountController = TextEditingController();
     final noteController = TextEditingController();
@@ -61,8 +68,9 @@ class HomeScreen extends StatelessWidget {
       return;
     }
 
+        final budgetCategory = _normalizeBudgetCategory(category);
     await context.read<RecordProvider>().addRecord(
-          category: category,
+          category: budgetCategory,
           amount: amount,
           note: noteController.text.trim(),
           time: DateTime.now(),
@@ -94,7 +102,8 @@ class HomeScreen extends StatelessWidget {
     final today = DateTime.now();
     final recordProvider = context.watch<RecordProvider>();
     final limitProvider = context.watch<LimitProvider>();
-    final spent = recordProvider.todaySpent;
+    final dailyCategories = limitProvider.dailyTrackedCategories;
+    final spent = recordProvider.todaySpentForCategories(dailyCategories);
     final limit = limitProvider.config.dailyLimit;
     final remaining = limit - spent;
     final remainingRate = limit == 0 ? 0.0 : remaining / limit;
@@ -214,7 +223,7 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 8),
           SummaryCard(
               title: '今日记账',
-              value: '${recordProvider.todayCount} 笔',
+              value: '${recordProvider.todayCountForCategories(dailyCategories)} 笔',
               icon: Icons.receipt_long_outlined),
           const SizedBox(height: 16),
           Row(

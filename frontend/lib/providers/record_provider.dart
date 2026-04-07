@@ -5,11 +5,28 @@ import '../models/expense_record.dart';
 import '../services/api_client.dart';
 
 class RecordProvider extends ChangeNotifier {
-  static const _storageKey = 'records';
+  static const _storageKeyBase = 'records';
+  String _scope = 'guest';
   List<ExpenseRecord> _records = [];
   List<ExpenseRecord> get records => List.unmodifiable(_records);
 
+  String get _storageKey => '$_storageKeyBase::$_scope';
+
   RecordProvider() {
+    load();
+  }
+
+  void applyAuthContext({required String scope, required bool loggedIn}) {
+    final normalizedScope = loggedIn ? scope : 'guest';
+    if (_scope == normalizedScope) {
+      return;
+    }
+    _scope = normalizedScope;
+    if (!loggedIn) {
+      _records = [];
+      notifyListeners();
+      return;
+    }
     load();
   }
 
@@ -110,10 +127,38 @@ class RecordProvider extends ChangeNotifier {
         .fold(0.0, (sum, item) => sum + item.amount);
   }
 
+  double todaySpentForCategories(Set<String> categories) {
+    if (categories.isEmpty) {
+      return 0;
+    }
+    final now = DateTime.now();
+    return _records
+        .where((e) =>
+            categories.contains(e.category) &&
+            e.time.year == now.year &&
+            e.time.month == now.month &&
+            e.time.day == now.day)
+        .fold(0.0, (sum, item) => sum + item.amount);
+  }
+
   int get todayCount {
     final now = DateTime.now();
     return _records
         .where((e) =>
+            e.time.year == now.year &&
+            e.time.month == now.month &&
+            e.time.day == now.day)
+        .length;
+  }
+
+  int todayCountForCategories(Set<String> categories) {
+    if (categories.isEmpty) {
+      return 0;
+    }
+    final now = DateTime.now();
+    return _records
+        .where((e) =>
+            categories.contains(e.category) &&
             e.time.year == now.year &&
             e.time.month == now.month &&
             e.time.day == now.day)
@@ -128,6 +173,15 @@ class RecordProvider extends ChangeNotifier {
             e.time.year == now.year &&
             e.time.month == now.month &&
             e.time.day == now.day)
+        .fold(0.0, (sum, item) => sum + item.amount);
+  }
+
+  double spentForCategoryMonth(String category, DateTime month) {
+    return _records
+        .where((e) =>
+            e.category == category &&
+            e.time.year == month.year &&
+            e.time.month == month.month)
         .fold(0.0, (sum, item) => sum + item.amount);
   }
 

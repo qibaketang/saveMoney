@@ -11,4 +11,6 @@ const expenseSchema = new mongoose.Schema({
   spentAt: { type: Date, required: true }
 }, { timestamps: true });
 
+expenseSchema.index({ userId: 1, spentAt: -1 });
+
 module.exports = mongoose.model('Expense', expenseSchema);

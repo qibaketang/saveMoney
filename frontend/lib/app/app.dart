@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
@@ -15,6 +16,16 @@ class BudgetGuardApp extends StatelessWidget {
         return MaterialApp(
           title: 'Budget Guard',
           debugShowCheckedModeBanner: false,
+          locale: const Locale('zh', 'CN'),
+          supportedLocales: const [
+            Locale('zh', 'CN'),
+            Locale('en', 'US'),
+          ],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           home: !auth.ready

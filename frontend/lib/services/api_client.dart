@@ -152,6 +152,16 @@ class ApiClient {
         return '登录状态已失效，请重新登录';
       case ApiErrorCodes.authInvalidPhone:
         return '手机号格式不正确';
+      case ApiErrorCodes.authInvalidPassword:
+        return '密码不符合要求，请输入 6-32 位';
+      case ApiErrorCodes.authInvalidVerifyCode:
+        return '验证码错误，请使用演示验证码 123456';
+      case ApiErrorCodes.authPhoneExists:
+        return '该手机号已注册，请直接登录';
+      case ApiErrorCodes.authUserNotFound:
+        return '账号不存在，请先注册';
+      case ApiErrorCodes.authWrongPassword:
+        return '手机号或密码错误';
       case ApiErrorCodes.validationFailed:
         return '请求参数不合法，请检查后重试';
       case ApiErrorCodes.resourceNotFound:

@@ -5,7 +5,16 @@ const { dayRange } = require('../utils/date');
 async function getTodayUsage(userId) {
   const limit = await Limit.findOne({ userId });
   const { start, end } = dayRange();
-  const expenses = await Expense.find({ userId, spentAt: { $gte: start, $lt: end } });
+  const dailyCategories = (limit?.categories || [])
+    .filter((item) => (item.cycle || 'daily') === 'daily' && item.name)
+    .map((item) => item.name);
+
+  const query = { userId, spentAt: { $gte: start, $lt: end } };
+  if (dailyCategories.length > 0) {
+    query.category = { $in: dailyCategories };
+  }
+
+  const expenses = await Expense.find(query);
   const spent = expenses.reduce((sum, item) => sum + item.amount, 0);
   const dailyLimit = limit?.dailyLimit ?? 250;
   return {

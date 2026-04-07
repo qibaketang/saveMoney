@@ -10,9 +10,11 @@ async function getLimit(req, res) {
 }
 
 async function upsertLimit(req, res) {
+  const nextDaily = typeof req.body.dailyLimit === 'number' ? req.body.dailyLimit : 250;
+  const nextMonthly = typeof req.body.monthlyLimit === 'number' ? req.body.monthlyLimit : 7500;
   const data = await Limit.findOneAndUpdate(
     { userId: req.user.userId },
-    { ...req.body, monthlyLimit: (req.body.dailyLimit || 250) * 30 },
+    { ...req.body, dailyLimit: nextDaily, monthlyLimit: nextMonthly },
     { new: true, upsert: true }
   );
   return sendSuccess(res, { limit: data }, '保存限额配置成功');

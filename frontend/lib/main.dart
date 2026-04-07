@@ -13,10 +13,50 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => RecordProvider()),
-        ChangeNotifierProvider(create: (_) => LimitProvider()),
-        ChangeNotifierProvider(create: (_) => GoalProvider()),
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, RecordProvider>(
+          create: (_) => RecordProvider(),
+          update: (_, auth, recordProvider) {
+            final provider = recordProvider ?? RecordProvider();
+            provider.applyAuthContext(
+              scope: auth.cacheScope,
+              loggedIn: auth.loggedIn,
+            );
+            return provider;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, LimitProvider>(
+          create: (_) => LimitProvider(),
+          update: (_, auth, limitProvider) {
+            final provider = limitProvider ?? LimitProvider();
+            provider.applyAuthContext(
+              scope: auth.cacheScope,
+              loggedIn: auth.loggedIn,
+            );
+            return provider;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, GoalProvider>(
+          create: (_) => GoalProvider(),
+          update: (_, auth, goalProvider) {
+            final provider = goalProvider ?? GoalProvider();
+            provider.applyAuthContext(
+              scope: auth.cacheScope,
+              loggedIn: auth.loggedIn,
+            );
+            return provider;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, SettingsProvider>(
+          create: (_) => SettingsProvider(),
+          update: (_, auth, settingsProvider) {
+            final provider = settingsProvider ?? SettingsProvider();
+            provider.applyAuthContext(
+              scope: auth.cacheScope,
+              loggedIn: auth.loggedIn,
+            );
+            return provider;
+          },
+        ),
       ],
       child: const BudgetGuardApp(),
     ),
