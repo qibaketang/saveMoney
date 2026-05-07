@@ -21,12 +21,15 @@ class LimitProvider extends ChangeNotifier {
       );
 
   String get _storageKey => '$_storageKeyBase::$_scope';
-  static const String dailyBudgetCategory = '餐饮';
 
   LimitConfig get config => _config;
-  DateTime get currentMonth => DateTime(DateTime.now().year, DateTime.now().month, 1);
+  DateTime get currentMonth =>
+      DateTime(DateTime.now().year, DateTime.now().month, 1);
 
-  Set<String> get dailyTrackedCategories => {dailyBudgetCategory};
+  Set<String> get dailyTrackedCategories => _config.categoryLimits.entries
+      .where((entry) => entry.value.cycle == LimitCycle.daily)
+      .map((entry) => entry.key)
+      .toSet();
 
   double computeMonthlyTotal({
     required double dailyLimit,
@@ -37,15 +40,16 @@ class LimitProvider extends ChangeNotifier {
     return (dailyLimit * days) + monthlyCategoryLimit;
   }
 
-  int daysOfMonth(DateTime month) => DateUtils.getDaysInMonth(month.year, month.month);
+  int daysOfMonth(DateTime month) =>
+      DateUtils.getDaysInMonth(month.year, month.month);
 
   LimitConfig normalizeConfig(LimitConfig source, {DateTime? month}) {
     final normalized = source.copy();
     final targetMonth = month ?? currentMonth;
-    final foodLimit = normalized.categoryLimits[dailyBudgetCategory];
-    if (foodLimit != null && foodLimit.cycle == LimitCycle.daily) {
-      normalized.dailyLimit = foodLimit.dailyLimit;
-    }
+    final dailyCategorySum = normalized.categoryLimits.values
+        .where((setting) => setting.cycle == LimitCycle.daily)
+        .fold<double>(0, (sum, item) => sum + item.dailyLimit);
+    normalized.dailyLimit = dailyCategorySum;
 
     final monthlyCategorySum = normalized.categoryLimits.values
         .where((setting) => setting.cycle == LimitCycle.monthly)

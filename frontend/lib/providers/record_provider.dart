@@ -117,62 +117,77 @@ class RecordProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
   double get todaySpent {
     final now = DateTime.now();
     return _records
-        .where((e) =>
-            e.time.year == now.year &&
-            e.time.month == now.month &&
-            e.time.day == now.day)
+        .where((e) => _isSameDay(e.time, now))
+        .fold(0.0, (sum, item) => sum + item.amount);
+  }
+
+  double spentForCategoriesOnDate(Set<String> categories, DateTime date) {
+    if (categories.isEmpty) {
+      return 0;
+    }
+    return _records
+        .where(
+            (e) => categories.contains(e.category) && _isSameDay(e.time, date))
         .fold(0.0, (sum, item) => sum + item.amount);
   }
 
   double todaySpentForCategories(Set<String> categories) {
-    if (categories.isEmpty) {
-      return 0;
-    }
-    final now = DateTime.now();
-    return _records
-        .where((e) =>
-            categories.contains(e.category) &&
-            e.time.year == now.year &&
-            e.time.month == now.month &&
-            e.time.day == now.day)
-        .fold(0.0, (sum, item) => sum + item.amount);
+    return spentForCategoriesOnDate(categories, DateTime.now());
   }
 
   int get todayCount {
     final now = DateTime.now();
+    return _records.where((e) => _isSameDay(e.time, now)).length;
+  }
+
+  int countForCategoriesOnDate(Set<String> categories, DateTime date) {
+    if (categories.isEmpty) {
+      return 0;
+    }
     return _records
-        .where((e) =>
-            e.time.year == now.year &&
-            e.time.month == now.month &&
-            e.time.day == now.day)
+        .where(
+            (e) => categories.contains(e.category) && _isSameDay(e.time, date))
         .length;
   }
 
   int todayCountForCategories(Set<String> categories) {
-    if (categories.isEmpty) {
-      return 0;
-    }
-    final now = DateTime.now();
-    return _records
+    return countForCategoriesOnDate(categories, DateTime.now());
+  }
+
+  List<ExpenseRecord> recordsForCategoryOnDate(String category, DateTime date) {
+    final list = _records
+        .where((e) => e.category == category && _isSameDay(e.time, date))
+        .toList();
+    list.sort((a, b) => b.time.compareTo(a.time));
+    return list;
+  }
+
+  List<ExpenseRecord> recordsForCategoryInMonth(
+      String category, DateTime month) {
+    final list = _records
         .where((e) =>
-            categories.contains(e.category) &&
-            e.time.year == now.year &&
-            e.time.month == now.month &&
-            e.time.day == now.day)
-        .length;
+            e.category == category &&
+            e.time.year == month.year &&
+            e.time.month == month.month)
+        .toList();
+    list.sort((a, b) => b.time.compareTo(a.time));
+    return list;
   }
 
   double spentForCategoryToday(String category) {
-    final now = DateTime.now();
+    return spentForCategoryOnDate(category, DateTime.now());
+  }
+
+  double spentForCategoryOnDate(String category, DateTime date) {
     return _records
-        .where((e) =>
-            e.category == category &&
-            e.time.year == now.year &&
-            e.time.month == now.month &&
-            e.time.day == now.day)
+        .where((e) => e.category == category && _isSameDay(e.time, date))
         .fold(0.0, (sum, item) => sum + item.amount);
   }
 

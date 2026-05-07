@@ -6,13 +6,19 @@ import '../../services/api_client.dart';
 import '../../providers/record_provider.dart';
 
 class RecordsScreen extends StatefulWidget {
-  const RecordsScreen({super.key});
+  const RecordsScreen({super.key, this.filterDate});
+
+  final DateTime? filterDate;
 
   @override
   State<RecordsScreen> createState() => _RecordsScreenState();
 }
 
 class _RecordsScreenState extends State<RecordsScreen> {
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
   Future<void> _showEditDialog(
       BuildContext context, ExpenseRecord record) async {
     final amountController =
@@ -136,9 +142,18 @@ class _RecordsScreenState extends State<RecordsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final records = context.watch<RecordProvider>().records;
+    final allRecords = context.watch<RecordProvider>().records;
+    final records = widget.filterDate == null
+        ? allRecords
+        : allRecords
+            .where((item) => _isSameDay(item.time, widget.filterDate!))
+            .toList();
+    final title = widget.filterDate == null
+        ? '消费记录'
+        : '当日消费记录（${AppFormatters.date(widget.filterDate!)}）';
+
     return Scaffold(
-      appBar: AppBar(title: const Text('消费记录')),
+      appBar: AppBar(title: Text(title)),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: records.length,

@@ -19,13 +19,21 @@ class ExpenseRecord {
     this.receiptPath,
   });
 
+  static DateTime _parseLocalDateTime(String raw) {
+    return DateTime.parse(raw).toLocal();
+  }
+
+  static String _serializeUtcDateTime(DateTime value) {
+    return value.toUtc().toIso8601String();
+  }
+
   factory ExpenseRecord.fromJson(Map<String, dynamic> json) => ExpenseRecord(
         id: json['id'] as String,
         category: json['category'] as String,
         amount: (json['amount'] as num).toDouble(),
         note: json['note'] as String? ?? '',
         tags: List<String>.from(json['tags'] as List? ?? const []),
-        time: DateTime.parse(json['time'] as String),
+        time: _parseLocalDateTime(json['time'] as String),
         location: json['location'] as String?,
         receiptPath: json['receiptPath'] as String?,
       );
@@ -36,7 +44,7 @@ class ExpenseRecord {
         amount: (json['amount'] as num).toDouble(),
         note: json['note'] as String? ?? '',
         tags: List<String>.from(json['tags'] as List? ?? const []),
-        time: DateTime.parse((json['spentAt'] ?? json['time']) as String),
+        time: _parseLocalDateTime((json['spentAt'] ?? json['time']) as String),
         location: json['location'] as String?,
         receiptPath: json['receiptUrl'] as String?,
       );
@@ -46,7 +54,7 @@ class ExpenseRecord {
         'amount': amount,
         'note': note,
         'tags': tags,
-        'spentAt': time.toIso8601String(),
+        'spentAt': _serializeUtcDateTime(time),
         'location': location,
       };
 
@@ -56,7 +64,7 @@ class ExpenseRecord {
         'amount': amount,
         'note': note,
         'tags': tags,
-        'time': time.toIso8601String(),
+        'time': _serializeUtcDateTime(time),
         'location': location,
         'receiptPath': receiptPath,
       };

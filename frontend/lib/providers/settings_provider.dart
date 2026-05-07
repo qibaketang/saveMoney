@@ -4,6 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsProvider extends ChangeNotifier {
   static const _storageKeyBase = 'settings';
+  static const List<String> _defaultQuickCategories = [
+    '早餐',
+    '午餐',
+    '晚餐',
+    '交通',
+    '购物',
+  ];
   String _scope = 'guest';
 
   bool limitAlert = true;
@@ -12,6 +19,7 @@ class SettingsProvider extends ChangeNotifier {
   bool smsNotification = false;
   bool darkMode = false;
   bool quickLedger = true;
+  List<String> quickLedgerCategories = List.of(_defaultQuickCategories);
 
   String get _storageKey => '$_storageKeyBase::$_scope';
 
@@ -32,6 +40,7 @@ class SettingsProvider extends ChangeNotifier {
       smsNotification = false;
       darkMode = false;
       quickLedger = true;
+      quickLedgerCategories = List.of(_defaultQuickCategories);
       notifyListeners();
       return;
     }
@@ -49,6 +58,18 @@ class SettingsProvider extends ChangeNotifier {
     smsNotification = json['smsNotification'] ?? false;
     darkMode = json['darkMode'] ?? false;
     quickLedger = json['quickLedger'] ?? true;
+    final categories = json['quickLedgerCategories'];
+    if (categories is List) {
+      final parsed = categories
+          .whereType<String>()
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+      quickLedgerCategories =
+          parsed.isEmpty ? List.of(_defaultQuickCategories) : parsed;
+    } else {
+      quickLedgerCategories = List.of(_defaultQuickCategories);
+    }
     notifyListeners();
   }
 
@@ -59,6 +80,7 @@ class SettingsProvider extends ChangeNotifier {
     bool? smsNotificationValue,
     bool? darkModeValue,
     bool? quickLedgerValue,
+    List<String>? quickLedgerCategoriesValue,
   }) async {
     limitAlert = limitAlertValue ?? limitAlert;
     overLimitAlert = overLimitAlertValue ?? overLimitAlert;
@@ -66,15 +88,27 @@ class SettingsProvider extends ChangeNotifier {
     smsNotification = smsNotificationValue ?? smsNotification;
     darkMode = darkModeValue ?? darkMode;
     quickLedger = quickLedgerValue ?? quickLedger;
+    quickLedgerCategories = quickLedgerCategoriesValue == null
+        ? quickLedgerCategories
+        : quickLedgerCategoriesValue
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+    if (quickLedgerCategories.isEmpty) {
+      quickLedgerCategories = List.of(_defaultQuickCategories);
+    }
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_storageKey, jsonEncode({
-      'limitAlert': limitAlert,
-      'overLimitAlert': overLimitAlert,
-      'pushNotification': pushNotification,
-      'smsNotification': smsNotification,
-      'darkMode': darkMode,
-      'quickLedger': quickLedger,
-    }));
+    await prefs.setString(
+        _storageKey,
+        jsonEncode({
+          'limitAlert': limitAlert,
+          'overLimitAlert': overLimitAlert,
+          'pushNotification': pushNotification,
+          'smsNotification': smsNotification,
+          'darkMode': darkMode,
+          'quickLedger': quickLedger,
+          'quickLedgerCategories': quickLedgerCategories,
+        }));
     notifyListeners();
   }
 }

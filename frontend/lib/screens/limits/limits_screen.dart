@@ -69,7 +69,8 @@ class _LimitsScreenState extends State<LimitsScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: amountCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   labelText: cycle == LimitCycle.daily ? '日限额' : '月限额',
                 ),
@@ -131,10 +132,12 @@ class _LimitsScreenState extends State<LimitsScreen> {
     });
   }
 
-  Future<void> _editCategoryLimit(BuildContext context, String category,
-      CategoryLimitSetting value) async {
+  Future<void> _editCategoryLimit(
+      BuildContext context, String category, CategoryLimitSetting value) async {
     final amountCtrl = TextEditingController(
-      text: value.selectedAmount > 0 ? value.selectedAmount.toStringAsFixed(0) : '',
+      text: value.selectedAmount > 0
+          ? value.selectedAmount.toStringAsFixed(0)
+          : '',
     );
     var selectedCycle = value.cycle;
 
@@ -155,8 +158,9 @@ class _LimitsScreenState extends State<LimitsScreen> {
                 onSelectionChanged: (selection) {
                   setDialogState(() {
                     selectedCycle = selection.first;
-                    final selectedAmount =
-                        selectedCycle == LimitCycle.daily ? value.dailyLimit : value.monthlyLimit;
+                    final selectedAmount = selectedCycle == LimitCycle.daily
+                        ? value.dailyLimit
+                        : value.monthlyLimit;
                     amountCtrl.text = selectedAmount > 0
                         ? selectedAmount.toStringAsFixed(0)
                         : '';
@@ -166,7 +170,8 @@ class _LimitsScreenState extends State<LimitsScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: amountCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   labelText: selectedCycle == LimitCycle.daily ? '日限额' : '月限额',
                 ),
@@ -209,11 +214,13 @@ class _LimitsScreenState extends State<LimitsScreen> {
       } else {
         final cycle = result['cycle'] as LimitCycle;
         final amount = (result['amount'] as num).toDouble();
-        final current = _draft.categoryLimits[category] ?? CategoryLimitSetting.daily(0);
+        final current =
+            _draft.categoryLimits[category] ?? CategoryLimitSetting.daily(0);
         _draft.categoryLimits[category] = CategoryLimitSetting(
           cycle: cycle,
           dailyLimit: cycle == LimitCycle.daily ? amount : current.dailyLimit,
-          monthlyLimit: cycle == LimitCycle.monthly ? amount : current.monthlyLimit,
+          monthlyLimit:
+              cycle == LimitCycle.monthly ? amount : current.monthlyLimit,
         );
       }
       _markDirty(context.read<LimitProvider>());
@@ -263,11 +270,6 @@ class _LimitsScreenState extends State<LimitsScreen> {
                 onPressed: () async {
                   final messenger = ScaffoldMessenger.of(context);
                   final provider = context.read<LimitProvider>();
-                  final daily = double.tryParse(dailyController.text.trim()) ?? 0;
-                  setState(() {
-                    _draft.dailyLimit = daily;
-                    _markDirty(provider);
-                  });
                   await provider.saveConfig(_draft);
                   if (!mounted) {
                     return;
@@ -276,7 +278,8 @@ class _LimitsScreenState extends State<LimitsScreen> {
                     _dirty = false;
                     _syncFromProvider(provider.config);
                   });
-                  messenger.showSnackBar(const SnackBar(content: Text('限额设置已保存')));
+                  messenger
+                      .showSnackBar(const SnackBar(content: Text('限额设置已保存')));
                 },
                 child: const Text('保存限额设置'),
               ),
@@ -288,44 +291,13 @@ class _LimitsScreenState extends State<LimitsScreen> {
           TextField(
             controller: dailyController,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: '每日限额（餐饮）'),
-            onChanged: (value) {
-              setState(() {
-                _draft.dailyLimit = double.tryParse(value) ?? 0;
-                final currentFood = _draft.categoryLimits[LimitProvider.dailyBudgetCategory] ??
-                    CategoryLimitSetting.daily(0);
-                _draft.categoryLimits[LimitProvider.dailyBudgetCategory] = CategoryLimitSetting(
-                  cycle: LimitCycle.daily,
-                  dailyLimit: _draft.dailyLimit,
-                  monthlyLimit: currentFood.monthlyLimit,
-                );
-                _markDirty(limitProvider);
-              });
-            },
+            readOnly: true,
+            decoration: const InputDecoration(labelText: '今日限额（按分类日限额汇总）'),
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            children: [200, 250, 300, 500]
-                .map((value) => ActionChip(
-                    label: Text('¥$value'),
-                    onPressed: () {
-                      setState(() {
-                        _draft.dailyLimit = value.toDouble();
-                        final currentFood =
-                            _draft.categoryLimits[LimitProvider.dailyBudgetCategory] ??
-                                CategoryLimitSetting.daily(0);
-                        _draft.categoryLimits[LimitProvider.dailyBudgetCategory] =
-                            CategoryLimitSetting(
-                          cycle: LimitCycle.daily,
-                          dailyLimit: _draft.dailyLimit,
-                          monthlyLimit: currentFood.monthlyLimit,
-                        );
-                        dailyController.text = value.toString();
-                        _markDirty(limitProvider);
-                      });
-                    }))
-                .toList(),
+          Text(
+            '切换分类的日/月限额后，今日限额会自动同步更新。',
+            style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 16),
           Card(
@@ -339,7 +311,8 @@ class _LimitsScreenState extends State<LimitsScreen> {
           Row(
             children: [
               Expanded(
-                child: Text('分类限额', style: Theme.of(context).textTheme.titleMedium),
+                child: Text('分类限额',
+                    style: Theme.of(context).textTheme.titleMedium),
               ),
               TextButton.icon(
                 onPressed: () => _addCategoryLimit(context),
@@ -355,9 +328,8 @@ class _LimitsScreenState extends State<LimitsScreen> {
             final spent = isDaily
                 ? recordProvider.spentForCategoryToday(entry.key)
                 : recordProvider.spentForCategoryMonth(entry.key, now);
-            final double ratio = amount == 0
-                ? 0.0
-                : (spent / amount).clamp(0, 1).toDouble();
+            final double ratio =
+                amount == 0 ? 0.0 : (spent / amount).clamp(0, 1).toDouble();
             return Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -366,11 +338,12 @@ class _LimitsScreenState extends State<LimitsScreen> {
                     Row(
                       children: [
                         Expanded(child: Text(entry.key)),
-                        Text('${isDaily ? '日' : '月'} ${AppFormatters.currency(amount)}'),
+                        Text(
+                            '${isDaily ? '日' : '月'} ${AppFormatters.currency(amount)}'),
                         IconButton(
                           icon: const Icon(Icons.edit_outlined),
-                          onPressed: () =>
-                              _editCategoryLimit(context, entry.key, entry.value),
+                          onPressed: () => _editCategoryLimit(
+                              context, entry.key, entry.value),
                         ),
                       ],
                     ),

@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,8 +24,26 @@ class ApiClient {
 
   static final ApiClient instance = ApiClient._();
 
-  static const String _baseUrl = 'http://localhost:3000/api';
+  static const String _baseUrlFromEnv =
+      String.fromEnvironment('API_BASE_URL', defaultValue: '');
   static const String _tokenKey = 'auth_token';
+
+  String get _baseUrl {
+    if (_baseUrlFromEnv.isNotEmpty) {
+      return _baseUrlFromEnv;
+    }
+
+    if (kIsWeb) {
+      return 'http://localhost:3000/api';
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      // Android emulator maps host machine localhost via 10.0.2.2.
+      return 'http://10.0.2.2:3000/api';
+    }
+
+    return 'http://localhost:3000/api';
+  }
 
   Future<void> Function()? _onUnauthorized;
 
@@ -48,40 +68,90 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> get(String path, {bool withAuth = true}) async {
-    final response = await http.get(
-      Uri.parse('$_baseUrl$path'),
-      headers: await _headers(withAuth: withAuth),
-    );
+    final response = await _executeRequest(
+        (headers) => http
+            .get(
+              Uri.parse('$_baseUrl$path'),
+              headers: headers,
+            )
+            .timeout(const Duration(seconds: 12)),
+        withAuth: withAuth);
     return _parseEnvelope(response);
   }
 
   Future<Map<String, dynamic>> post(String path, Object body,
       {bool withAuth = true}) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl$path'),
-      headers: await _headers(withAuth: withAuth),
-      body: jsonEncode(body),
-    );
+    final response = await _executeRequest(
+        (headers) => http
+            .post(
+              Uri.parse('$_baseUrl$path'),
+              headers: headers,
+              body: jsonEncode(body),
+            )
+            .timeout(const Duration(seconds: 12)),
+        withAuth: withAuth);
     return _parseEnvelope(response);
   }
 
   Future<Map<String, dynamic>> put(String path, Object body,
       {bool withAuth = true}) async {
-    final response = await http.put(
-      Uri.parse('$_baseUrl$path'),
-      headers: await _headers(withAuth: withAuth),
-      body: jsonEncode(body),
-    );
+    final response = await _executeRequest(
+        (headers) => http
+            .put(
+              Uri.parse('$_baseUrl$path'),
+              headers: headers,
+              body: jsonEncode(body),
+            )
+            .timeout(const Duration(seconds: 12)),
+        withAuth: withAuth);
     return _parseEnvelope(response);
   }
 
   Future<Map<String, dynamic>> delete(String path,
       {bool withAuth = true}) async {
-    final response = await http.delete(
-      Uri.parse('$_baseUrl$path'),
-      headers: await _headers(withAuth: withAuth),
-    );
+    final response = await _executeRequest(
+        (headers) => http
+            .delete(
+              Uri.parse('$_baseUrl$path'),
+              headers: headers,
+            )
+            .timeout(const Duration(seconds: 12)),
+        withAuth: withAuth);
     return _parseEnvelope(response);
+  }
+
+  Future<http.Response> _executeRequest(
+    Future<http.Response> Function(Map<String, String> headers) request, {
+    required bool withAuth,
+  }) async {
+    final headers = await _headers(withAuth: withAuth);
+    try {
+      return await request(headers);
+    } on TimeoutException {
+      throw const ApiException(
+        'NETWORK_TIMEOUT',
+        '请求超时，请确认后端已启动并检查网络连接',
+        statusCode: 0,
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        'NETWORK_UNREACHABLE',
+        '无法连接服务器，请确认后端已启动，并检查模拟器网络地址配置',
+        statusCode: 0,
+      );
+    } on FormatException {
+      throw const ApiException(
+        'NETWORK_RESPONSE_FORMAT',
+        '服务响应格式异常，请检查后端接口返回',
+        statusCode: 0,
+      );
+    } on Exception {
+      throw const ApiException(
+        'NETWORK_UNKNOWN',
+        '网络请求失败，请检查服务状态后重试',
+        statusCode: 0,
+      );
+    }
   }
 
   Map<String, dynamic> _parseEnvelope(http.Response response) {
